@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  ufc-api:
+    build: .
+    container_name: ufc-events-api
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_APP=src/api.py
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+    volumes:
+      # Mount source code for development (optional - comment out for production)
+      - ./src:/app/src

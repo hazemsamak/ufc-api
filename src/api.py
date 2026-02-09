@@ -12,11 +12,13 @@ def get_events():
     try:
         events = get_upcoming_ufc_schedule()
         
-        # Return only event name and date
+        # Return event name, date, type, and number
         simplified_events = [
             {
                 'event_name': event['event_name'],
-                'event_date': event['event_date']
+                'event_date': event['event_date'],
+                'event_type': event['event_type'],
+                'event_number': event['event_number']
             }
             for event in events
         ]

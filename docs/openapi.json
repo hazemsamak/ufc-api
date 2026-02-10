@@ -1,0 +1,137 @@
+{
+    "definitions": {},
+    "info": {
+        "title": "API",
+        "version": "0.0.1"
+    },
+    "paths": {
+        "/api/events": {
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "List of upcoming UFC events with basic details",
+                        "schema": {
+                            "properties": {
+                                "count": {
+                                    "example": 7,
+                                    "type": "integer"
+                                },
+                                "events": {
+                                    "items": {
+                                        "properties": {
+                                            "event_date": {
+                                                "example": "February 07, 2026",
+                                                "type": "string"
+                                            },
+                                            "event_name": {
+                                                "example": "UFC Fight Night: Bautista vs. Oliveira",
+                                                "type": "string"
+                                            },
+                                            "event_number": {
+                                                "example": "268",
+                                                "type": "string"
+                                            },
+                                            "event_type": {
+                                                "example": "UFC Fight Night",
+                                                "type": "string"
+                                            }
+                                        },
+                                        "type": "object"
+                                    },
+                                    "type": "array"
+                                },
+                                "status": {
+                                    "example": "success",
+                                    "type": "string"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    }
+                },
+                "tags": [
+                    "Events"
+                ]
+            }
+        },
+        "/api/events/full": {
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "List of upcoming UFC events with full details including location",
+                        "schema": {
+                            "properties": {
+                                "count": {
+                                    "example": 7,
+                                    "type": "integer"
+                                },
+                                "events": {
+                                    "items": {
+                                        "properties": {
+                                            "event_date": {
+                                                "example": "February 07, 2026",
+                                                "type": "string"
+                                            },
+                                            "event_name": {
+                                                "example": "UFC Fight Night: Bautista vs. Oliveira",
+                                                "type": "string"
+                                            },
+                                            "event_number": {
+                                                "example": "268",
+                                                "type": "string"
+                                            },
+                                            "event_type": {
+                                                "example": "UFC Fight Night",
+                                                "type": "string"
+                                            },
+                                            "location": {
+                                                "example": "Las Vegas, Nevada, USA",
+                                                "type": "string"
+                                            }
+                                        },
+                                        "type": "object"
+                                    },
+                                    "type": "array"
+                                },
+                                "status": {
+                                    "example": "success",
+                                    "type": "string"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    }
+                },
+                "tags": [
+                    "Events"
+                ]
+            }
+        },
+        "/api/health": {
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "API health status",
+                        "schema": {
+                            "properties": {
+                                "message": {
+                                    "example": "UFC Events API is running",
+                                    "type": "string"
+                                },
+                                "status": {
+                                    "example": "healthy",
+                                    "type": "string"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    }
+                },
+                "tags": [
+                    "System"
+                ]
+            }
+        }
+    },
+    "swagger": "2.0"
+}

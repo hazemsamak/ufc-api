@@ -20,6 +20,21 @@ UFC/
 └── README.md              # This file
 ```
 
+## Swagger Documentation
+ 
+ interactive Swagger UI is available at:
+```
+http://localhost:5000/apidocs
+```
+This UI allows you to explore and test the API endpoints directly from your browser.
+
+## External Documentation
+
+For offline access or third-party integration, you can find the documentation in the `docs/` folder:
+
+- **[API Reference (Markdown)](docs/API_REFERENCE.md)**
+- **[OpenAPI Specification (JSON)](docs/openapi.json)**
+ 
 ## API Endpoints
 
 ### 1. Health Check

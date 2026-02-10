@@ -1,13 +1,46 @@
 from flask import Flask, jsonify
+from flasgger import Swagger
 from scrapers.ufc_scraper import get_upcoming_ufc_schedule
 
 app = Flask(__name__)
+swagger = Swagger(app)
 
 @app.route('/api/events', methods=['GET'])
 def get_events():
     """
-    API endpoint to get upcoming UFC events and dates
-    Returns JSON with event names and dates
+    Get upcoming UFC events and dates
+    ---
+    tags:
+      - Events
+    responses:
+      200:
+        description: List of upcoming UFC events with basic details
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+              example: success
+            count:
+              type: integer
+              example: 7
+            events:
+              type: array
+              items:
+                type: object
+                properties:
+                  event_name:
+                    type: string
+                    example: "UFC Fight Night: Bautista vs. Oliveira"
+                  event_date:
+                    type: string
+                    example: "February 07, 2026"
+                  event_type:
+                    type: string
+                    example: "UFC Fight Night"
+                  event_number:
+                    type: string
+                    example: "268"
     """
     try:
         events = get_upcoming_ufc_schedule()
@@ -38,7 +71,42 @@ def get_events():
 @app.route('/api/events/full', methods=['GET'])
 def get_events_full():
     """
-    API endpoint to get upcoming UFC events with full details (including location)
+    Get upcoming UFC events with full details
+    ---
+    tags:
+      - Events
+    responses:
+      200:
+        description: List of upcoming UFC events with full details including location
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+              example: success
+            count:
+              type: integer
+              example: 7
+            events:
+              type: array
+              items:
+                type: object
+                properties:
+                  event_name:
+                    type: string
+                    example: "UFC Fight Night: Bautista vs. Oliveira"
+                  event_date:
+                    type: string
+                    example: "February 07, 2026"
+                  event_type:
+                    type: string
+                    example: "UFC Fight Night"
+                  event_number:
+                    type: string
+                    example: "268"
+                  location:
+                    type: string
+                    example: "Las Vegas, Nevada, USA"
     """
     try:
         events = get_upcoming_ufc_schedule()
@@ -59,6 +127,21 @@ def get_events_full():
 def health_check():
     """
     Health check endpoint
+    ---
+    tags:
+      - System
+    responses:
+      200:
+        description: API health status
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+              example: healthy
+            message:
+              type: string
+              example: UFC Events API is running
     """
     return jsonify({
         'status': 'healthy',

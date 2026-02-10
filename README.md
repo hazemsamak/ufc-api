@@ -42,11 +42,15 @@ Returns upcoming UFC events with just names and dates.
   "events": [
     {
       "event_name": "UFC Fight Night: Bautista vs. Oliveira",
-      "event_date": "February 07, 2026"
+      "event_date": "February 07, 2026",
+      "event_type": "UFC Fight Night",
+      "event_number": "268"
     },
     {
-      "event_name": "UFC Fight Night: Strickland vs. Hernandez", 
-      "event_date": "February 21, 2026"
+      "event_name": "UFC 325: Strickland vs. Hernandez", 
+      "event_date": "February 21, 2026",
+      "event_type": "UFC",
+      "event_number": "325"
     }
   ]
 }
@@ -56,7 +60,26 @@ Returns upcoming UFC events with just names and dates.
 ```
 GET /api/events/full
 ```
-Returns upcoming UFC events with names, dates, and locations.
+Returns upcoming UFC events with names, dates, types, numbers, and locations.
+
+**Response:**
+```json
+{
+  "status": "success",
+  "count": 7,
+  "events": [
+    {
+      "event_date": "February 07, 2026",
+      "event_name": "UFC Fight Night: Bautista vs. Oliveira",
+      "event_number": "268",
+      "event_type": "UFC Fight Night",
+      "location": "Las Vegas, Nevada, USA"
+    }
+  ]
+}
+```
+
+
 
 ## Quick Start
 

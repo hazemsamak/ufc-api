@@ -1,9 +1,10 @@
 import requests
-from bs4 import BeautifulSoup
 import pandas as pd
 import re
+from typing import List, Dict, Any, Optional
+from bs4 import BeautifulSoup, Tag
 
-def get_event_date_from_detail_page(event_url):
+def get_event_date_from_detail_page(event_url: str) -> str:
     """
     Get the actual event date from the event detail page
     """
@@ -15,7 +16,7 @@ def get_event_date_from_detail_page(event_url):
         # Look for date information in various possible locations
         date_info = soup.find('li', class_='b-list__box-list-item')
         if date_info and 'Date:' in date_info.get_text():
-            date_text = date_info.get_text().replace('Date:', '').strip()
+            date_text = str(date_info.get_text().replace('Date:', '').strip())
             return date_text
         
         # Alternative: look for date in event details
@@ -23,13 +24,13 @@ def get_event_date_from_detail_page(event_url):
         for detail in details:
             text = detail.get_text()
             if 'Date:' in text:
-                return text.replace('Date:', '').strip()
+                return str(text.replace('Date:', '').strip())
         
         return "Date TBA"
     except:
         return "Date TBA"
 
-def clean_event_name(event_name):
+def clean_event_name(event_name: str) -> str:
     """
     Clean event name to show only "UFC <number>" for numbered events
     For example: "UFC 325: Holloway vs. Oliveira" -> "UFC 325"
@@ -44,7 +45,7 @@ def clean_event_name(event_name):
     return event_name
 
 
-def get_upcoming_ufc_schedule():
+def get_upcoming_ufc_schedule() -> List[Dict[str, Any]]:
     """
     Scrape the upcoming UFC schedule from UFCStats.com and return as list of dictionaries
     """
@@ -68,7 +69,12 @@ def get_upcoming_ufc_schedule():
     # Fetch event mapping from Wikipedia
     wiki_mapping = get_event_mapping_from_wikipedia()
     
-    event_rows = tbody.find_all('tr')
+    event_rows: List[Tag] = []
+    if isinstance(tbody, Tag):
+        event_rows = tbody.find_all('tr')
+    else:
+        return []
+    
     upcoming_events = []
     
     for row in event_rows:
@@ -83,7 +89,7 @@ def get_upcoming_ufc_schedule():
             continue
             
         raw_event_name = event_link_tag.get_text(strip=True)
-        event_link = event_link_tag['href']
+        event_link = str(event_link_tag['href'])
         
         # Determine event type and number
         event_type = "UFC"
@@ -137,7 +143,7 @@ def get_upcoming_ufc_schedule():
     
     return upcoming_events
 
-def get_event_mapping_from_wikipedia():
+def get_event_mapping_from_wikipedia() -> Dict[str, str]:
     """
     Scrape upcoming events from Wikipedia to get the Fight Night numbers.
     Returns a dictionary mapping Date -> Event Name (e.g. "February 10, 2024" -> "UFC Fight Night 236")
@@ -187,15 +193,17 @@ def get_event_mapping_from_wikipedia():
                     if "Fight Night" in event_name and not re.search(r'\d+', event_name):
                         link = event_col.find('a')
                         if link:
-                            wiki_url = f"https://en.wikipedia.org{link.get('href')}"
-                            # Fetch detail page to find number
-                            number = get_fight_night_number_from_wiki_url(wiki_url)
-                            if number:
-                                # Construct new name e.g. "UFC Fight Night 267"
-                                # Or should we keep the subtitle? "UFC Fight Night 267: Strickland vs. Hernandez"
-                                # The user just asked for the number, but usually we want "UFC Fight Night <number>" as the main identifier.
-                                # Let's prepend it.
-                                event_name = f"UFC Fight Night {number}"
+                            link_href = link.get('href')
+                            if isinstance(link_href, str):
+                                wiki_url = f"https://en.wikipedia.org{link_href}"
+                                # Fetch detail page to find number
+                                number = get_fight_night_number_from_wiki_url(wiki_url)
+                                if number:
+                                    # Construct new name e.g. "UFC Fight Night 267"
+                                    # Or should we keep the subtitle? "UFC Fight Night 267: Strickland vs. Hernandez"
+                                    # The user just asked for the number, but usually we want "UFC Fight Night <number>" as the main identifier.
+                                    # Let's prepend it.
+                                    event_name = f"UFC Fight Night {number}"
 
                     mapping[date_text] = event_name
                     
@@ -228,7 +236,7 @@ def get_event_mapping_from_wikipedia():
         print(f"Error scraping Wikipedia: {e}")
         return {}
 
-def get_fight_night_number_from_wiki_url(url):
+def get_fight_night_number_from_wiki_url(url: str) -> Optional[str]:
     """
     Fetch a Wikipedia event page and look for "UFC Fight Night <number>" in the text.
     Returns the number string (e.g. "267") or None.

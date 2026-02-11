@@ -1,0 +1,6 @@
+pytest
+pytest-flask
+mypy
+types-requests
+pandas-stubs
+types-beautifulsoup4

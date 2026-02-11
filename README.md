@@ -6,19 +6,28 @@ A simple Flask API to scrape and return upcoming UFC events and dates.
 
 ```
 UFC/
+├── .github/workflows/  # CI/CD Pipeline configuration
+├── docs/               # API Reference and OpenAPI Spec
 ├── src/
 │   ├── api.py              # Main Flask API server
 │   └── scrapers/
 │       └── ufc_scraper.py  # UFC scraping logic
 ├── tests/
-│   └── test_api.py         # API testing script
+│   ├── test_api_pytest.py  # Automated tests (pytest)
+│   ├── test_api.py         # Legacy manual testing script
+│   ├── verify_caching.py   # Caching performance test
+│   └── mypy.ini            # Static type checking config
 ├── Dockerfile              # Docker image configuration
-├── docker-compose.yml      # Docker Compose orchestration
-├── .dockerignore          # Docker ignore rules
 ├── requirements.txt        # Python dependencies
-├── .gitignore             # Git ignore rules
 └── README.md              # This file
 ```
+## Features
+
+- **Automated Scraping:** Fetches live data from UFCStats.com and Wikipedia.
+- **Caching:** 12-hour caching layer using `Flask-Caching` for lightning-fast responses (< 20ms).
+- **Interactive UI:** Swagger UI for easy API exploration.
+- **Type Safety:** Comprehensive Python type hinting and `mypy` integration.
+- **CI/CD:** Automated testing and Docker builds via GitHub Actions.
 
 ## Swagger Documentation
  
@@ -112,9 +121,14 @@ python src/api.py
 - http://127.0.0.1:5000
 - http://0.0.0.0:5000
 
-4. Test the API (in a separate terminal):
+4. Run automated tests:
 ```bash
-python tests/test_api.py
+pytest
+```
+
+5. Verify caching performance:
+```bash
+python tests/verify_caching.py
 ```
 
 ## Example Usage with curl

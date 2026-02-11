@@ -1,7 +1,8 @@
 from flask import Flask, jsonify
-from flasgger import Swagger
+from flasgger import Swagger # type: ignore
 from flask_caching import Cache
 from scrapers.ufc_scraper import get_upcoming_ufc_schedule
+from typing import Any, Dict, List
 
 app = Flask(__name__)
 swagger = Swagger(app)
@@ -14,7 +15,7 @@ cache = Cache(app, config={
 
 @app.route('/api/events', methods=['GET'])
 @cache.cached()
-def get_events():
+def get_events() -> Any:
     """
     Get upcoming UFC events and dates
     ---
@@ -78,7 +79,7 @@ def get_events():
 
 @app.route('/api/events/full', methods=['GET'])
 @cache.cached()
-def get_events_full():
+def get_events_full() -> Any:
     """
     Get upcoming UFC events with full details
     ---
@@ -133,7 +134,7 @@ def get_events_full():
         }), 500
 
 @app.route('/api/health', methods=['GET'])
-def health_check():
+def health_check() -> Any:
     """
     Health check endpoint
     ---

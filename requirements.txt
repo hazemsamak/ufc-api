@@ -4,3 +4,5 @@ pandas
 flask
 flasgger
 Flask-Caching
+pytest
+pytest-flask

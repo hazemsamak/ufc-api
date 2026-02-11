@@ -1,11 +1,19 @@
 from flask import Flask, jsonify
 from flasgger import Swagger
+from flask_caching import Cache
 from scrapers.ufc_scraper import get_upcoming_ufc_schedule
 
 app = Flask(__name__)
 swagger = Swagger(app)
 
+# Configure caching
+cache = Cache(app, config={
+    'CACHE_TYPE': 'SimpleCache',
+    'CACHE_DEFAULT_TIMEOUT': 43200  # 12 hours
+})
+
 @app.route('/api/events', methods=['GET'])
+@cache.cached()
 def get_events():
     """
     Get upcoming UFC events and dates
@@ -69,6 +77,7 @@ def get_events():
         }), 500
 
 @app.route('/api/events/full', methods=['GET'])
+@cache.cached()
 def get_events_full():
     """
     Get upcoming UFC events with full details

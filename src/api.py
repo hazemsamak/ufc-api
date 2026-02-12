@@ -2,6 +2,8 @@ import os
 from flask import Flask, jsonify
 from flasgger import Swagger # type: ignore
 from flask_caching import Cache
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from dotenv import load_dotenv
 from scrapers.ufc_scraper import get_upcoming_ufc_schedule
 from typing import Any, Dict, List
@@ -19,6 +21,21 @@ cache = Cache(app, config={
     'CACHE_REDIS_PORT': int(os.getenv('REDIS_PORT', 6379)),
     'CACHE_DEFAULT_TIMEOUT': int(os.getenv('CACHE_TIMEOUT', 43200))
 })
+
+# Configure rate limiting
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    default_limits=os.getenv('RATELIMIT_DEFAULT', "200 per day;50 per hour").split(';'),
+    storage_uri=f"redis://{os.getenv('REDIS_HOST', 'localhost')}:{os.getenv('REDIS_PORT', 6379)}"
+)
+
+@app.errorhandler(429)
+def ratelimit_handler(e):
+    return jsonify({
+        'status': 'error',
+        'message': f"Rate limit exceeded: {e.description}"
+    }), 429
 
 @app.route('/api/events', methods=['GET'])
 @cache.cached()

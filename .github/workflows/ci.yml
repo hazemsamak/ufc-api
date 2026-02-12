@@ -41,6 +41,7 @@ jobs:
     env:
       REDIS_HOST: localhost
       REDIS_PORT: 6379
+      RATELIMIT_DEFAULT: "1000 per minute"
     steps:
     - uses: actions/checkout@v3
     - name: Create .env from example

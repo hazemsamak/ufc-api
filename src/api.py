@@ -38,13 +38,22 @@ def ratelimit_handler(e):
     }), 429
 
 @app.route('/api/events', methods=['GET'])
-@cache.cached()
+@cache.cached(query_string=True)
 def get_events() -> Any:
     """
     Get upcoming UFC events and dates
     ---
     tags:
       - Events
+    parameters:
+      - name: type
+        in: query
+        type: string
+        description: Filter by event type (e.g., "UFC", "UFC Fight Night")
+      - name: search
+        in: query
+        type: string
+        description: Search in event name or location
     responses:
       200:
         description: List of upcoming UFC events with basic details
@@ -76,8 +85,20 @@ def get_events() -> Any:
                     example: "268"
     """
     try:
+        from flask import request
+        event_type = request.args.get('type')
+        search_query = request.args.get('search')
+        
         events = get_upcoming_ufc_schedule()
         
+        # Apply filters
+        if event_type:
+            events = [e for e in events if event_type.lower() == e['event_type'].lower()]
+        
+        if search_query:
+            search_query = search_query.lower()
+            events = [e for e in events if search_query in e['event_name'].lower() or search_query in e['location'].lower()]
+            
         # Return event name, date, type, and number
         simplified_events = [
             {
@@ -102,13 +123,22 @@ def get_events() -> Any:
         }), 500
 
 @app.route('/api/events/full', methods=['GET'])
-@cache.cached()
+@cache.cached(query_string=True)
 def get_events_full() -> Any:
     """
     Get upcoming UFC events with full details
     ---
     tags:
       - Events
+    parameters:
+      - name: type
+        in: query
+        type: string
+        description: Filter by event type (e.g., "UFC", "UFC Fight Night")
+      - name: search
+        in: query
+        type: string
+        description: Search in event name or location
     responses:
       200:
         description: List of upcoming UFC events with full details including location
@@ -143,7 +173,19 @@ def get_events_full() -> Any:
                     example: "Las Vegas, Nevada, USA"
     """
     try:
+        from flask import request
+        event_type = request.args.get('type')
+        search_query = request.args.get('search')
+        
         events = get_upcoming_ufc_schedule()
+        
+        # Apply filters
+        if event_type:
+            events = [e for e in events if event_type.lower() == e['event_type'].lower()]
+        
+        if search_query:
+            search_query = search_query.lower()
+            events = [e for e in events if search_query in e['event_name'].lower() or search_query in e['location'].lower()]
         
         return jsonify({
             'status': 'success',

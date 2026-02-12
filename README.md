@@ -1,247 +1,93 @@
 # UFC Events API
 
-A simple Flask API to scrape and return upcoming UFC events and dates.
+A production-ready Flask API that scrapes and serves upcoming UFC events with persistent caching and rate limiting.
 
 ## Project Structure
 
 ```
 UFC/
-├── .github/workflows/  # CI/CD Pipeline configuration
+├── .github/workflows/  # CI/CD Pipeline (GitHub Actions)
 ├── docs/               # API Reference and OpenAPI Spec
 ├── src/
-│   ├── api.py              # Main Flask API server
+│   ├── api.py              # Main Flask API / WSGI entry point
 │   └── scrapers/
-│       └── ufc_scraper.py  # UFC scraping logic
+│       └── ufc_scraper.py  # Multi-source scraper (UFCStats + Wikipedia)
 ├── tests/
-│   ├── test_scraper_unit.py # Unit tests for scraper logic
-│   ├── test_api_pytest.py  # API endpoint tests (pytest)
-│   ├── test_api.py         # Legacy manual testing script
-│   ├── verify_caching.py   # Caching performance test
-│   └── mypy.ini            # Static type checking config
-├── Dockerfile              # Docker image configuration
-├── requirements.txt        # Python dependencies
-└── README.md              # This file
+│   ├── test_scraper_unit.py # Unit tests with mocking
+│   ├── test_api_pytest.py  # API integration tests
+│   ├── verify_ratelimit.py # Rate limit verification script
+│   └── test_api_filtering.py # Filtering verification script
+├── Dockerfile              # Production container config
+├── docker-compose.yml     # Multi-container orchestration (API + Redis)
+├── requirements.txt        # Production dependencies
+└── README.md              # Project documentation
 ```
+
 ## Features
 
-- **Automated Scraping:** Fetches live data from UFCStats.com and Wikipedia.
-- **Caching:** 12-hour caching layer using `Flask-Caching` for lightning-fast responses (< 20ms).
-- **Interactive UI:** Swagger UI for easy API exploration.
-- **Type Safety:** Comprehensive Python type hinting and `mypy` integration.
-- **Unit Testing:** Robust test suite with mocking for external web dependencies.
-- **CI/CD:** Automated testing and Docker builds via GitHub Actions.
+- **Automated Scraping:** Fetches live data from UFCStats.com and Wikipedia for event numbers.
+- **Persistent Caching:** Uses **Redis** to cache scraped data for 12 hours, ensuring < 20ms response times.
+- **Distributed Rate Limiting:** Protects the API using `Flask-Limiter` with a Redis backend (Default: 200/day, 50/hour).
+- **Advanced Filtering:** Search events by `type` (exact) or `search` (substring) across name and location.
+- **Production Ready:** Pre-configured for **Gunicorn** in Docker with optimized worker/thread settings.
+- **Interactive documentation:** Swagger UI available for live endpoint testing.
 
 ## Configuration
 
-The application uses environment variables for configuration. A template is provided in `.env.example`.
-
-1. Copy the example file:
-   ```bash
-   cp .env.example .env
-   ```
-2. Adjust the values in `.env` as needed:
-   - `API_PORT`: Port the API will listen on (default: 5000).
-   - `API_EXTERNAL_PORT`: Container External Port the API will listen on (default: 5010).
-   - `CACHE_TIMEOUT`: Data cache duration in seconds (default: 43200).
-   - `REDIS_HOST`: Hostname for the Redis server (default: redis).
-   - `REDIS_PORT`: Port for the Redis server (default: 6379).
-   - `RATELIMIT_DEFAULT`: Default rate limit (default: "200 per day;50 per hour").
-   - `FLASK_DEBUG`: Enable/disable debug mode (default: True).
-   - `GUNICORN_WORKERS`: Number of worker processes (default: 4).
-   - `GUNICORN_THREADS`: Number of threads per worker (default: 2).
-   - `GUNICORN_TIMEOUT`: Worker timeout in seconds (default: 60).
-
-## Swagger Documentation
- 
- interactive Swagger UI is available at:
-```
-http://localhost:5000/apidocs
-```
-This UI allows you to explore and test the API endpoints directly from your browser.
-
-## External Documentation
-
-For offline access or third-party integration, you can find the documentation in the `docs/` folder:
-
-- **[API Reference (Markdown)](docs/API_REFERENCE.md)**
-- **[OpenAPI Specification (JSON)](docs/openapi.json)**
- 
-## API Endpoints
-
-### 1. Health Check
-```
-GET /api/health
-```
-Returns API health status.
-
-### 2. Get Events (Names and Dates Only)
-```
-GET /api/events
-```
-Returns upcoming UFC events with just names and dates.
-
-**Response:**
-```json
-{
-  "status": "success",
-  "count": 7,
-  "events": [
-    {
-      "event_name": "UFC Fight Night: Bautista vs. Oliveira",
-      "event_date": "February 07, 2026",
-      "event_type": "UFC Fight Night",
-      "event_number": "268"
-    },
-    {
-      "event_name": "UFC 325: Strickland vs. Hernandez", 
-      "event_date": "February 21, 2026",
-      "event_type": "UFC",
-      "event_number": "325"
-    }
-  ]
-}
-```
-
-### 3. Get Full Events (with Location)
-```
-GET /api/events/full
-```
-Returns upcoming UFC events with names, dates, types, numbers, and locations.
-
-**Response:**
-```json
-{
-  "status": "success",
-  "count": 7,
-  "events": [
-    {
-      "event_date": "February 07, 2026",
-      "event_name": "UFC Fight Night: Bautista vs. Oliveira",
-      "event_number": "268",
-      "event_type": "UFC Fight Night",
-      "location": "Las Vegas, Nevada, USA"
-    }
-  ]
-}
-```
-
-
-
-## Quick Start
-
-### Local Development (Windows/Linux/macOS)
-1. Install dependencies:
+The application uses environment variables. Copy the template to start:
 ```bash
-pip install -r requirements.txt
+cp .env.example .env
 ```
 
-2. Start the API server:
+| Variable | Description | Default |
+| :--- | :--- | :--- |
+| `REDIS_HOST` | Redis server hostname | `redis` (Docker) / `localhost` (Local) |
+| `REDIS_PORT` | Redis server port | `6379` |
+| `RATELIMIT_DEFAULT`| Default rate limit rules | `"200 per day;50 per hour"` |
+| `API_EXTERNAL_PORT`| Public port for the API | `5010` |
+| `CACHE_TIMEOUT` | Cache duration in seconds | `43200` (12 hours) |
+
+---
+
+## Getting Started
+
+### 1. Docker Deployment (Recommended)
+This starts the API and the Redis dependency in a single command.
 ```bash
-python src/api.py
+docker-compose up -d --build
 ```
+Access the API at `http://localhost:5010`.
 
-> [!IMPORTANT]
-> **Gunicorn** is a Unix-based server and **will not run natively on Windows** (it fails with `ModuleNotFoundError: No module named 'fcntl'`). For a production-grade server on Windows, you can use **Waitress**:
-> ```bash
-> pip install waitress
-> waitress-serve --port=5000 src.api:app
-> ```
+### 2. Local Development (Manual)
+To run the code directly on your machine while using the Dockerized Redis:
+1. **Start Redis only:** `docker-compose up -d redis`
+2. **Install dependencies:** `pip install -r requirements.txt`
+3. **Run API:** `python src/api.py`
 
-## Docker Deployment
+---
 
-```bash
-# Health check
-curl http://127.0.0.1:5000/api/health
+## API Reference
 
-# Get events (names and dates only)
-curl http://127.0.0.1:5000/api/events
+### Swagger UI
+Test the endpoints interactively: `http://localhost:5000/apidocs` (or `5010` if via Docker).
 
-# Get full events (with location)
-curl http://127.0.0.1:5000/api/events/full
-```
+### Endpoints
+- `GET /api/events`: Basic name, date, and type info.
+- `GET /api/events/full`: Includes full metadata (location, record).
+- `GET /api/health`: System health status.
 
-## Running Unit Tests
+### Filtering & Search
+All event endpoints support the following query parameters:
+- `type`: Exact match for event type (`UFC` or `UFC Fight Night`).
+- `search`: Substring search in event name or location.
 
-To run the unit tests independently of the API (uses mocking, no internet required):
-```bash
-pytest tests/test_scraper_unit.py
-```
+**Examples:**
+- `GET /api/events?type=UFC` (Numbered events only)
+- `GET /api/events/full?search=Vegas` (Events in Las Vegas)
 
-## Example Usage with Python
+---
 
-```python
-import requests
-
-# Get upcoming events (name and date only)
-response = requests.get("http://127.0.0.1:5000/api/events")
-data = response.json()
-
-for event in data['events']:
-    print(f"{event['event_name']} - {event['event_date']}")
-```
-
-## Docker Deployment
-
-### Using Docker
-
-1. Build the Docker image:
-```bash
-docker build -t ufc-api .
-```
-
-2. Run the container:
-```bash
-docker run -d -p 5000:5000 --name ufc-api ufc-api
-```
-
-3. Check logs:
-```bash
-docker logs ufc-api
-```
-
-4. Stop the container:
-```bash
-docker stop ufc-api
-docker rm ufc-api
-```
-
-### Using Docker Compose (Recommended)
-
-1. Start the service:
-```bash
-docker-compose up -d
-```
-
-2. Check logs:
-```bash
-docker-compose logs -f
-```
-
-3. Stop the service:
-```bash
-docker-compose down
-```
-
-### Testing with Docker
-
-Once the container is running, test the API:
-```bash
-# Health check
-curl http://localhost:5010/api/health
-
-# Get events
-curl http://localhost:5010/api/events
-
-# Or run the test suite inside the container context (if mapped correctly)
-python tests/test_api.py
-```
-
-## Development
-
-To run the API in development mode with auto-reload:
-```bash
-cd src
-python api.py
-```
-
-The API runs with Flask's debug mode enabled by default.
+## Testing & Verification
+- **Unit Tests:** `pytest tests/test_scraper_unit.py`
+- **Rate Limit Test:** `python tests/verify_ratelimit.py`
+- **Filtering Test:** `python tests/test_api_filtering.py`

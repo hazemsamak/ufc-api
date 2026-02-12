@@ -11,15 +11,13 @@ services:
     environment:
       - FLASK_APP=${FLASK_APP:-src/api.py}
       - PYTHONUNBUFFERED=1
-      - REDIS_HOST=${REDIS_HOST:-redis}
+      - REDIS_HOST=${REDIS_HOST:-ufc-redis}
       - REDIS_PORT=${REDIS_PORT:-6379}
     depends_on:
-      - redis
+      - ufc-redis
     restart: unless-stopped
 
-  redis:
+  ufc-redis:
     image: redis:alpine
     container_name: ufc-redis
-    ports:
-      - "6379:6379"
     restart: unless-stopped

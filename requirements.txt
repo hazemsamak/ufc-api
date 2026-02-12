@@ -6,3 +6,4 @@ flasgger
 Flask-Caching
 python-dotenv
 gunicorn
+redis

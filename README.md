@@ -43,6 +43,8 @@ The application uses environment variables for configuration. A template is prov
    - `API_PORT`: Port the API will listen on (default: 5000).
    - `API_EXTERNAL_PORT`: Container External Port the API will listen on (default: 5010).
    - `CACHE_TIMEOUT`: Data cache duration in seconds (default: 43200).
+   - `REDIS_HOST`: Hostname for the Redis server (default: redis).
+   - `REDIS_PORT`: Port for the Redis server (default: 6379).
    - `FLASK_DEBUG`: Enable/disable debug mode (default: True).
    - `GUNICORN_WORKERS`: Number of worker processes (default: 4).
    - `GUNICORN_THREADS`: Number of threads per worker (default: 2).

@@ -14,7 +14,9 @@ swagger = Swagger(app)
 
 # Configure caching
 cache = Cache(app, config={
-    'CACHE_TYPE': 'SimpleCache',
+    'CACHE_TYPE': 'RedisCache',
+    'CACHE_REDIS_HOST': os.getenv('REDIS_HOST', 'localhost'),
+    'CACHE_REDIS_PORT': int(os.getenv('REDIS_PORT', 6379)),
     'CACHE_DEFAULT_TIMEOUT': int(os.getenv('CACHE_TIMEOUT', 43200))
 })
 

@@ -13,7 +13,8 @@ UFC/
 │   └── scrapers/
 │       └── ufc_scraper.py  # UFC scraping logic
 ├── tests/
-│   ├── test_api_pytest.py  # Automated tests (pytest)
+│   ├── test_scraper_unit.py # Unit tests for scraper logic
+│   ├── test_api_pytest.py  # API endpoint tests (pytest)
 │   ├── test_api.py         # Legacy manual testing script
 │   ├── verify_caching.py   # Caching performance test
 │   └── mypy.ini            # Static type checking config
@@ -27,6 +28,7 @@ UFC/
 - **Caching:** 12-hour caching layer using `Flask-Caching` for lightning-fast responses (< 20ms).
 - **Interactive UI:** Swagger UI for easy API exploration.
 - **Type Safety:** Comprehensive Python type hinting and `mypy` integration.
+- **Unit Testing:** Robust test suite with mocking for external web dependencies.
 - **CI/CD:** Automated testing and Docker builds via GitHub Actions.
 
 ## Configuration
@@ -39,8 +41,12 @@ The application uses environment variables for configuration. A template is prov
    ```
 2. Adjust the values in `.env` as needed:
    - `API_PORT`: Port the API will listen on (default: 5000).
+   - `API_EXTERNAL_PORT`: Container External Port the API will listen on (default: 5010).
    - `CACHE_TIMEOUT`: Data cache duration in seconds (default: 43200).
    - `FLASK_DEBUG`: Enable/disable debug mode (default: True).
+   - `GUNICORN_WORKERS`: Number of worker processes (default: 4).
+   - `GUNICORN_THREADS`: Number of threads per worker (default: 2).
+   - `GUNICORN_TIMEOUT`: Worker timeout in seconds (default: 60).
 
 ## Swagger Documentation
  
@@ -120,6 +126,7 @@ Returns upcoming UFC events with names, dates, types, numbers, and locations.
 
 ## Quick Start
 
+### Local Development (Windows/Linux/macOS)
 1. Install dependencies:
 ```bash
 pip install -r requirements.txt
@@ -130,21 +137,14 @@ pip install -r requirements.txt
 python src/api.py
 ```
 
-3. API will be available at:
-- http://127.0.0.1:5000
-- http://0.0.0.0:5000
+> [!IMPORTANT]
+> **Gunicorn** is a Unix-based server and **will not run natively on Windows** (it fails with `ModuleNotFoundError: No module named 'fcntl'`). For a production-grade server on Windows, you can use **Waitress**:
+> ```bash
+> pip install waitress
+> waitress-serve --port=5000 src.api:app
+> ```
 
-4. Run automated tests:
-```bash
-pytest
-```
-
-5. Verify caching performance:
-```bash
-python tests/verify_caching.py
-```
-
-## Example Usage with curl
+## Docker Deployment
 
 ```bash
 # Health check
@@ -155,6 +155,13 @@ curl http://127.0.0.1:5000/api/events
 
 # Get full events (with location)
 curl http://127.0.0.1:5000/api/events/full
+```
+
+## Running Unit Tests
+
+To run the unit tests independently of the API (uses mocking, no internet required):
+```bash
+pytest tests/test_scraper_unit.py
 ```
 
 ## Example Usage with Python
@@ -217,12 +224,12 @@ docker-compose down
 Once the container is running, test the API:
 ```bash
 # Health check
-curl http://localhost:5000/api/health
+curl http://localhost:5010/api/health
 
 # Get events
-curl http://localhost:5000/api/events
+curl http://localhost:5010/api/events
 
-# Or run the test suite
+# Or run the test suite inside the container context (if mapped correctly)
 python tests/test_api.py
 ```
 

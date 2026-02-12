@@ -5,3 +5,4 @@ flask
 flasgger
 Flask-Caching
 python-dotenv
+gunicorn

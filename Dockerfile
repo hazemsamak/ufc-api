@@ -17,7 +17,6 @@ COPY src/ ./src/
 EXPOSE 5000
 
 # Set environment variables
-ENV FLASK_APP=src/api.py
 ENV PYTHONUNBUFFERED=1
 
 # Run the application

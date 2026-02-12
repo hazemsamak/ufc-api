@@ -5,8 +5,10 @@ services:
     build: .
     container_name: ufc-events-api
     ports:
-      - "5010:5000"
+      - "${API_EXTERNAL_PORT:-5010}:5000"
+    env_file:
+      - .env
     environment:
-      - FLASK_APP=src/api.py
+      - FLASK_APP=${FLASK_APP:-src/api.py}
       - PYTHONUNBUFFERED=1
     restart: unless-stopped

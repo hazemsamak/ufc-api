@@ -1,8 +1,13 @@
+import os
 from flask import Flask, jsonify
 from flasgger import Swagger # type: ignore
 from flask_caching import Cache
+from dotenv import load_dotenv
 from scrapers.ufc_scraper import get_upcoming_ufc_schedule
 from typing import Any, Dict, List
+
+# Load environment variables from .env file
+load_dotenv()
 
 app = Flask(__name__)
 swagger = Swagger(app)
@@ -10,7 +15,7 @@ swagger = Swagger(app)
 # Configure caching
 cache = Cache(app, config={
     'CACHE_TYPE': 'SimpleCache',
-    'CACHE_DEFAULT_TIMEOUT': 43200  # 12 hours
+    'CACHE_DEFAULT_TIMEOUT': int(os.getenv('CACHE_TIMEOUT', 43200))
 })
 
 @app.route('/api/events', methods=['GET'])
@@ -159,4 +164,8 @@ def health_check() -> Any:
     })
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    host = os.getenv('API_HOST', '0.0.0.0')
+    port = int(os.getenv('API_PORT', 5000))
+    debug = os.getenv('FLASK_DEBUG', 'True').lower() == 'true'
+    
+    app.run(debug=debug, host=host, port=port)

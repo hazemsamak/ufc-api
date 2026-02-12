@@ -29,6 +29,19 @@ UFC/
 - **Type Safety:** Comprehensive Python type hinting and `mypy` integration.
 - **CI/CD:** Automated testing and Docker builds via GitHub Actions.
 
+## Configuration
+
+The application uses environment variables for configuration. A template is provided in `.env.example`.
+
+1. Copy the example file:
+   ```bash
+   cp .env.example .env
+   ```
+2. Adjust the values in `.env` as needed:
+   - `API_PORT`: Port the API will listen on (default: 5000).
+   - `CACHE_TIMEOUT`: Data cache duration in seconds (default: 43200).
+   - `FLASK_DEBUG`: Enable/disable debug mode (default: True).
+
 ## Swagger Documentation
  
  interactive Swagger UI is available at:

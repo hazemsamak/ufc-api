@@ -4,3 +4,4 @@ pandas
 flask
 flasgger
 Flask-Caching
+python-dotenv

@@ -4,3 +4,4 @@ mypy
 types-requests
 pandas-stubs
 types-beautifulsoup4
+pytest-mock

@@ -36,5 +36,8 @@ Thumbs.db
 # Docker
 .dockerignore
 
+# Environment variables
+.env
+
 # Tests (optional - uncomment if you don't want tests in the image)
 # tests/

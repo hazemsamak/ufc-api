@@ -7,3 +7,4 @@ Flask-Caching
 python-dotenv
 gunicorn
 redis
+Flask-Limiter

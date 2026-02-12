@@ -6,7 +6,7 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from dotenv import load_dotenv
 from scrapers.ufc_scraper import get_upcoming_ufc_schedule
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Sequence, Union, Callable, cast
 
 # Load environment variables from .env file
 load_dotenv()
@@ -23,10 +23,11 @@ cache = Cache(app, config={
 })
 
 # Configure rate limiting
+default_limits = cast(Any, os.getenv('RATELIMIT_DEFAULT', "200 per day;50 per hour").split(';'))
 limiter = Limiter(
     get_remote_address,
     app=app,
-    default_limits=os.getenv('RATELIMIT_DEFAULT', "200 per day;50 per hour").split(';'),
+    default_limits=default_limits,
     storage_uri=f"redis://{os.getenv('REDIS_HOST', 'localhost')}:{os.getenv('REDIS_PORT', 6379)}"
 )
 

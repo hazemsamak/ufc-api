@@ -60,7 +60,7 @@ Access the API at `http://localhost:5010`.
 
 ### 2. Local Development (Manual)
 To run the code directly on your machine while using the Dockerized Redis:
-1. **Start Redis only:** `docker-compose up -d redis`
+1. **Start Redis only:** `docker-compose up -d ufc-redis`
 2. **Install dependencies:** `pip install -r requirements.txt`
 3. **Run API:** `python src/api.py`
 

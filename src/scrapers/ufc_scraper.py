@@ -262,7 +262,7 @@ def get_fight_night_number_from_wiki_url(url: str) -> Optional[str]:
                 
         # 2. Check first paragraphs
         content = soup.find('div', class_='mw-parser-output')
-        if content:
+        if isinstance(content, Tag):
             for p in content.find_all('p', recursive=False)[:3]:
                 match = re.search(r'UFC Fight Night\s+(\d+)', p.get_text())
                 if match:

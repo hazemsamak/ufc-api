@@ -121,6 +121,10 @@ def get_upcoming_ufc_schedule() -> List[Dict[str, Any]]:
                      wiki_match = re.search(r'Fight Night\s+(\d+)', wiki_name)
                      if wiki_match:
                          event_number = wiki_match.group(1)
+                         
+                     # If the original name is just generic, use the Wikipedia name (which usually contains the fighters)
+                     if ":" not in raw_event_name or raw_event_name.strip() == "UFC Fight Night":
+                         raw_event_name = wiki_name
 
         # If we didn't get the date yet (numbered events Loop), get it now
         # Creating a local variable 'event_date' if not already set is risky in loop if branches differ.
@@ -181,6 +185,9 @@ def get_event_mapping_from_wikipedia() -> Dict[str, str]:
                     event_name = event_col.get_text(strip=True)
                     date_text = date_col.get_text(strip=True)
                     
+                    # Clean up footnote references [1], [a], etc. from event name
+                    event_name = re.sub(r'\[.*?\]', '', event_name).strip()
+                    
                     # Normalize date to match UFCStats format if possible?
                     # UFCStats: "February 10, 2024"
                     # Wikipedia: "Feb 10, 2024" or "February 10, 2024"
@@ -199,26 +206,20 @@ def get_event_mapping_from_wikipedia() -> Dict[str, str]:
                                 # Fetch detail page to find number
                                 number = get_fight_night_number_from_wiki_url(wiki_url)
                                 if number:
-                                    # Construct new name e.g. "UFC Fight Night 267"
-                                    # Or should we keep the subtitle? "UFC Fight Night 267: Strickland vs. Hernandez"
-                                    # The user just asked for the number, but usually we want "UFC Fight Night <number>" as the main identifier.
-                                    # Let's prepend it.
-                                    event_name = f"UFC Fight Night {number}"
+                                    # Construct new name e.g. "UFC Fight Night 250: Yan vs. Figueiredo"
+                                    # Substitute number into event name while preserving the subtitle
+                                    event_name = re.sub(r'UFC Fight Night', f'UFC Fight Night {number}', event_name, count=1)
 
                     mapping[date_text] = event_name
                     
-                    # Also try converting "Feb 10, 2024" to "February 10, 2024"
+                   
+                        
                     try:
                         dt = pd.to_datetime(date_text)
-                        formatted_date = dt.strftime('%B %d, %Y').replace(' 0', ' ') # Remove leading zero in day? UFCStats uses "February 8, 2025" (no leading zero usually)
-                        # Actually pandas strftime %d is 01-31. 
-                        # Python's platform specific formatting for %-d or similar might work but relies on OS.
-                        # Let's just do standard valid date string and maybe handle the matching carefully.
                         
-                        # UFCStats date format from `get_event_date_from_detail_page`:
-                        # "February 8, 2025" or "July 27, 2024"
-                        
-                        formatted_date_long = dt.strftime('%B %d, %Y') # "February 08, 2025"
+                        # "February 08, 2025"
+                        formatted_date_long = dt.strftime('%B %d, %Y')
+                        mapping[formatted_date_long] = event_name
                         
                         # Handle single digit day matching manually if needed or just strip 0
                         parts = formatted_date_long.split(' ')
@@ -249,17 +250,24 @@ def get_fight_night_number_from_wiki_url(url: str) -> Optional[str]:
         soup = BeautifulSoup(response.text, 'html.parser')
         text = soup.get_text()
         
-        # Look for pattern "UFC Fight Night <number>"
-        # We need to be careful not to match future/past events mentioned in the chronology if they are not THIS event.
-        # But usually the page title or intro paragraph mentions the event name.
-        # Infobox "series" or "chronology" is tricky.
+        # Look for pattern "UFC Fight Night <number>" in the main heading or first paragraphs
+        # This avoids matching chronology infobox links to next/previous events.
         
-        # Let's look for explicitly "UFC Fight Night <number>" appearing in the first 2000 chars (intro)
-        intro_text = text[:5000]
-        match = re.search(r'UFC Fight Night\s+(\d+)', intro_text)
-        if match:
-            return match.group(1)
-            
+        # 1. Check main heading
+        heading = soup.find('h1', id='firstHeading')
+        if heading:
+            match = re.search(r'UFC Fight Night\s+(\d+)', heading.get_text())
+            if match:
+                return match.group(1)
+                
+        # 2. Check first paragraphs
+        content = soup.find('div', class_='mw-parser-output')
+        if content:
+            for p in content.find_all('p', recursive=False)[:3]:
+                match = re.search(r'UFC Fight Night\s+(\d+)', p.get_text())
+                if match:
+                    return match.group(1)
+                    
         return None
     except:
         return None

@@ -76,3 +76,8 @@ jobs:
     - name: Verify Docker Compose
       run: |
         docker compose config
+        
+    - name: Notify n8n webhook
+      if: ${{ always() }}
+      run: |
+        curl -X POST -H "Content-Type: application/json" -d '{"ref":"${{ github.ref }}","sha":"${{ github.sha }}","event":"${{ github.event_name }}"}' ${{ secrets.N8N_WEBHOOK_URL }}

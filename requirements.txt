@@ -8,3 +8,4 @@ python-dotenv
 gunicorn
 redis
 Flask-Limiter
+pytz

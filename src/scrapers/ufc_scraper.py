@@ -1,6 +1,9 @@
 import requests
 import pandas as pd
 import re
+import json
+from datetime import datetime
+import pytz
 from typing import List, Dict, Any, Optional
 from bs4 import BeautifulSoup, Tag
 
@@ -77,6 +80,9 @@ def get_upcoming_ufc_schedule() -> List[Dict[str, Any]]:
     
     upcoming_events = []
     
+    # Get timing info from ESPN once per schedule fetch
+    espn_schedule = get_espn_event_times()
+
     for row in event_rows:
         cols = row.find_all('td')
         
@@ -127,15 +133,31 @@ def get_upcoming_ufc_schedule() -> List[Dict[str, Any]]:
                          raw_event_name = wiki_name
 
         # If we didn't get the date yet (numbered events Loop), get it now
-        # Creating a local variable 'event_date' if not already set is risky in loop if branches differ.
         if 'event_date' not in locals():
              event_date = get_event_date_from_detail_page(event_link)
 
         # Extract location from second column
         location = cols[1].get_text(strip=True)
         
+        # Match with ESPN schedule by date
+        final_event_date = event_date # Fallback to original date
+        try:
+            dt_ufc = pd.to_datetime(event_date)
+            date_key = dt_ufc.strftime('%Y-%m-%d')
+            if date_key in espn_schedule:
+                raw_time_str = espn_schedule[date_key]['time']
+                if "T" in raw_time_str:
+                    dt_utc = datetime.fromisoformat(raw_time_str.replace('Z', '+00:00'))
+                    # Etc/GMT-4 is UTC+4
+                    gmt4 = pytz.timezone('Etc/GMT-4')
+                    dt_gmt4 = dt_utc.astimezone(gmt4)
+                    # Format: "February 28, 2026 02:00 AM"
+                    final_event_date = dt_gmt4.strftime('%B %d, %Y %I:%M %p')
+        except Exception:
+            pass
+
         upcoming_events.append({
-            'event_date': event_date,
+            'event_date': final_event_date,
             'event_type': event_type,
             'event_name': raw_event_name,
             'event_number': event_number,
@@ -146,6 +168,92 @@ def get_upcoming_ufc_schedule() -> List[Dict[str, Any]]:
         del event_date
     
     return upcoming_events
+
+def get_espn_event_times() -> Dict[str, Dict[str, Any]]:
+    """
+    Scrape ESPN MMA schedule to get event start times.
+    Returns a mapping of Date String (YYYY-MM-DD) -> {time, name}
+    """
+    url = "https://www.espn.com/mma/schedule"
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+    }
+    
+    try:
+        response = requests.get(url, headers=headers)
+        if response.status_code != 200:
+            return {}
+            
+        soup = BeautifulSoup(response.text, 'html.parser')
+        
+        # ESPN often embeds data in a script tag as JSON
+        # Look for the __espnfitt__ script
+        scripts = soup.find_all('script')
+        schedule_data = {}
+        
+        for script in scripts:
+            if 'window["__espnfitt__"]' in script.text:
+                json_str = None
+                # Try many regex patterns
+                patterns = [
+                    r'window\["__espnfitt__"\]\s*=\s*(\{.*?\});',
+                    r'window\["__espnfitt__"\]\s*=\s*(\{.*?\})',
+                    r'window\["__espnfitt__"\]\s*=(.*)'
+                ]
+                for p in patterns:
+                    json_match = re.search(p, script.text, re.DOTALL)
+                    if json_match:
+                        json_str = json_match.group(1).strip()
+                        if json_str.endswith(';'): json_str = json_str[:-1]
+                        break
+                
+                if json_str:
+                    try:
+                        data = json.loads(json_str)
+                        # Breadth-first search for 'events'
+                        stack = [data]
+                        events = []
+                        while stack:
+                            curr = stack.pop()
+                            if isinstance(curr, dict):
+                                if 'events' in curr and isinstance(curr['events'], list) and len(curr['events']) > 0:
+                                    events = curr['events']
+                                    break
+                                stack.extend(curr.values())
+                            elif isinstance(curr, list):
+                                stack.extend(curr)
+                        
+                        if events:
+                            for event in events:
+                                name = event.get('name', '')
+                                league = event.get('league', {}).get('abbrev', '')
+                                if league == 'UFC' or 'UFC' in name:
+                                    date_iso = event.get('date', '')
+                                    if date_iso:
+                                        dt = datetime.fromisoformat(date_iso.replace('Z', '+00:00'))
+                                        clean_date = dt.strftime('%Y-%m-%d')
+                                        schedule_data[clean_date] = {
+                                            'time': date_iso,
+                                            'name': name
+                                        }
+                            break
+                    except Exception:
+                        pass
+                
+        # Fallback to a very broad search if the specific script tag logic fails
+        if not schedule_data:
+            # Look for patterns like "date":"2026-02-28T...Z"
+            time_matches = re.findall(r'"date":"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}Z)"', response.text)
+            for tm in time_matches:
+                dt = datetime.fromisoformat(tm.replace('Z', '+00:00'))
+                clean_date = dt.strftime('%Y-%m-%d')
+                if clean_date not in schedule_data:
+                    schedule_data[clean_date] = {'time': tm, 'name': 'Unknown'}
+
+        return schedule_data
+    except Exception as e:
+        print(f"Error fetching ESPN schedule: {e}")
+        return {}
 
 def get_event_mapping_from_wikipedia() -> Dict[str, str]:
     """

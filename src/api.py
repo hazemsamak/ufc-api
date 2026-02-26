@@ -77,7 +77,7 @@ def get_events() -> Any:
                     example: "UFC Fight Night: Bautista vs. Oliveira"
                   event_date:
                     type: string
-                    example: "February 07, 2026"
+                    example: "February 07, 2026 02:00 AM"
                   event_type:
                     type: string
                     example: "UFC Fight Night"
@@ -162,7 +162,7 @@ def get_events_full() -> Any:
                     example: "UFC Fight Night: Bautista vs. Oliveira"
                   event_date:
                     type: string
-                    example: "February 07, 2026"
+                    example: "February 07, 2026 02:00 AM"
                   event_type:
                     type: string
                     example: "UFC Fight Night"

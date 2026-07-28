@@ -20,6 +20,7 @@ services:
   ufc-redis:
     image: redis:alpine
     container_name: ufc-redis
+    command: ["redis-server"]
     ports:
       - "${REDIS_PORT:-6379}:6379"
     restart: unless-stopped

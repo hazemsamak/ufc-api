@@ -90,7 +90,13 @@ def get_events() -> Any:
         event_type = request.args.get('type')
         search_query = request.args.get('search')
         
-        events = get_upcoming_ufc_schedule()
+        raw_events = get_upcoming_ufc_schedule()
+        if not raw_events:
+            try:
+                cache.delete(f"view/{request.full_path}")
+            except Exception:
+                pass
+        events = list(raw_events)
         
         # Apply filters
         if event_type:
@@ -98,7 +104,12 @@ def get_events() -> Any:
         
         if search_query:
             search_query = search_query.lower()
-            events = [e for e in events if search_query in e['event_name'].lower() or search_query in e['location'].lower()]
+            events = [
+                e for e in events 
+                if search_query in e['event_name'].lower() 
+                or search_query in e['location'].lower() 
+                or (e.get('event_number') and search_query in str(e['event_number']).lower())
+            ]
             
         # Return event name, date, type, and number
         simplified_events = [
@@ -178,7 +189,13 @@ def get_events_full() -> Any:
         event_type = request.args.get('type')
         search_query = request.args.get('search')
         
-        events = get_upcoming_ufc_schedule()
+        raw_events = get_upcoming_ufc_schedule()
+        if not raw_events:
+            try:
+                cache.delete(f"view/{request.full_path}")
+            except Exception:
+                pass
+        events = list(raw_events)
         
         # Apply filters
         if event_type:
@@ -186,7 +203,12 @@ def get_events_full() -> Any:
         
         if search_query:
             search_query = search_query.lower()
-            events = [e for e in events if search_query in e['event_name'].lower() or search_query in e['location'].lower()]
+            events = [
+                e for e in events 
+                if search_query in e['event_name'].lower() 
+                or search_query in e['location'].lower() 
+                or (e.get('event_number') and search_query in str(e['event_number']).lower())
+            ]
         
         return jsonify({
             'status': 'success',

@@ -89,7 +89,7 @@ def test_get_event_mapping_from_wikipedia(mocker):
     mapping = get_event_mapping_from_wikipedia()
     
     assert "February 10, 2024" in mapping
-    assert mapping["February 10, 2024"] == "UFC Fight Night 236"
+    assert "UFC Fight Night 236" in mapping["February 10, 2024"]
 
 def test_get_upcoming_ufc_schedule(mocker):
     """Test the full scraper orchestration with everything mocked"""

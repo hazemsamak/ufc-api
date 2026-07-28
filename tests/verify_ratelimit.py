@@ -1,21 +1,39 @@
+import sys
+import os
 import requests
 import time
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
+from api import app
 
 def test_rate_limiting():
     url = "http://localhost:5010/api/health"
     print(f"Testing rate limiting on {url}...")
     
-    # We'll try to hit it 10 times quickly. 
-    # Note: If default is 50 per hour, this might not trigger 429 unless 
-    # we lower the limit for testing or have a very low limit.
-    # However, this script demonstrates the approach.
+    server_running = False
+    try:
+        r = requests.get(url, timeout=1)
+        if r.status_code == 200:
+            server_running = True
+    except Exception:
+        server_running = False
+
+    client = app.test_client() if not server_running else None
     
     for i in range(1, 15):
-        response = requests.get(url)
-        print(f"Request {i}: Status {response.status_code}")
-        if response.status_code == 429:
+        if server_running:
+            response = requests.get(url)
+            status_code = response.status_code
+            json_data = response.json()
+        else:
+            resp = client.get('/api/health')
+            status_code = resp.status_code
+            json_data = resp.get_json()
+
+        print(f"Request {i}: Status {status_code}")
+        if status_code == 429:
             print("SUCCESS: Rate limit triggered!")
-            print(f"Response: {response.json()}")
+            print(f"Response: {json_data}")
             return
         time.sleep(0.1)
     

@@ -18,9 +18,7 @@ services:
     restart: unless-stopped
 
   ufc-redis:
-    image: redis:alpine
+    image: valkey/valkey:8-alpine
     container_name: ufc-redis
-    command: ["redis-server"]
-    ports:
-      - "${REDIS_PORT:-6379}:6379"
+    command: ["valkey-server"]
     restart: unless-stopped
